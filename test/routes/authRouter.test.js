@@ -1,13 +1,18 @@
+if (process.env.VSCODE_INSPECTOR_OPTIONS) {
+  jest.setTimeout(60 * 1000 * 5); // 5 minutes
+}
 const request = require('supertest');
 const app = require('../../src/service');
 
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
-//let testUserAuthToken;
+let testUserAuthToken;
+let testUserRes;
 
 beforeAll(async () => {
   testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
-  /*const registerRes = */await request(app).post('/api/auth').send(testUser);
-  //testUserAuthToken = registerRes.body.token;
+  const registerRes = await request(app).post('/api/auth').send(testUser);
+  testUserRes = registerRes.body.user;
+  testUserAuthToken = registerRes.body.token;
 });
 
 test('login', async () => {
@@ -18,6 +23,7 @@ test('login', async () => {
   const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
   console.log(password);
   expect(loginRes.body.user).toMatchObject(user);
+  await request(app).delete('/api/auth').set('Authorization', `Bearer ${loginRes.body.token}`);
 });
 
 test('failed login', async () => {
@@ -31,6 +37,7 @@ test('register', async () => {
   const registerRes = await request(app).post('/api/auth').send(newUser);
   expect(registerRes.status).toBe(200);
   expect(registerRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+  await request(app).delete('/api/auth').set('Authorization', `Bearer ${registerRes.body.token}`);
 });
 
 test('failed register', async () => {
@@ -53,10 +60,14 @@ test('failed logout', async () => {
   expect(logoutRes.body.message).toBe('unauthorized');
 });
 
-// test('update user', async () => {
-//   const registerAdminRes = await request(app).post('/api/auth').send({ name: 'admin', email: 'admin@test.com', password: 'a', roles: [{ role: 'admin' }] });
-//   const updateUserRes = await request(app).put(`/api/auth/${testUser.id}`).set('Authorization', `Bearer ${registerAdminRes.body.token}`).send({ email: 'new@test.com', password: 'a' });
-//   expect(updateUserRes.status).toBe(200);
-//   expect(updateUserRes.body.email).toBe('new@test.com');
-//   await request(app).put(`/api/auth/${testUser.id}`).send({ email: 'reg@test.com', password: 'a' }).set('Authorization', `Bearer ${registerAdminRes.body.token}`);
-// });
+test('update user', async () => {
+  const updateUserRes = await request(app).put(`/api/auth/${testUserRes.id}`).set('Authorization', `Bearer ${testUserAuthToken}`).send({ email: 'new@test.com', password: 'a' });
+  expect(updateUserRes.status).toBe(200);
+  expect(updateUserRes.body.email).toBe('new@test.com');
+});
+
+test('failed update user', async () => {
+  const updateUserRes = await request(app).put(`/api/auth/0`).set('Authorization', `Bearer ${testUserAuthToken}`).send({ email: 'new@test.com', password: 'a' });
+  expect(updateUserRes.status).toBe(403);
+  expect(updateUserRes.body.message).toBe('unauthorized');
+});

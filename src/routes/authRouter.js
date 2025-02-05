@@ -67,11 +67,17 @@ authRouter.authenticateToken = (req, res, next) => {
 authRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, roles } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'name, email, and password are required' });
     }
-    const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
+    let user;
+    if (!roles) {
+      user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
+    }
+    else {
+      user = await DB.addUser({ name, email, password, roles });
+    }
     const auth = await setAuth(user);
     res.json({ user: user, token: auth });
   })
