@@ -6,6 +6,8 @@ const { DB, Role } = require('../database/database.js');
 
 const authRouter = express.Router();
 
+const metrics = require('../metrics.js');
+
 authRouter.endpoints = [
   {
     method: 'POST',
@@ -67,6 +69,7 @@ authRouter.authenticateToken = (req, res, next) => {
 authRouter.post(
   '/',
   asyncHandler(async (req, res) => {
+    metrics.incrementPostRequests();
     const { name, email, password, roles } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'name, email, and password are required' });
@@ -87,6 +90,7 @@ authRouter.post(
 authRouter.put(
   '/',
   asyncHandler(async (req, res) => {
+    metrics.incrementPutRequests();
     const { email, password } = req.body;
     const user = await DB.getUser(email, password);
     const auth = await setAuth(user);
@@ -99,6 +103,7 @@ authRouter.delete(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metrics.incrementDeleteRequests();
     await clearAuth(req);
     res.json({ message: 'logout successful' });
   })
@@ -109,6 +114,7 @@ authRouter.put(
   '/:userId',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metrics.incrementPutRequests();
     const { email, password } = req.body;
     const userId = Number(req.params.userId);
     const user = req.user;
