@@ -3,7 +3,7 @@ const config = require('./config');
 module.exports = { sendMetricsPeriodically, incrementPostRequests, incrementGetRequests, incrementPutRequests, incrementDeleteRequests };
 
 function sendMetricsPeriodically(period) {
-const timer = setInterval(() => {
+setInterval(() => {
     try {
 
         //add some random requests
@@ -32,8 +32,6 @@ const timer = setInterval(() => {
 //system
 
 const os = require('os');
-const { send } = require('vite');
-const { metrics } = require('./config');
 
 function getCpuUsagePercentage() {
     const cpuUsage = os.loadavg()[0] / os.cpus().length;
