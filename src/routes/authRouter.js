@@ -98,15 +98,17 @@ authRouter.put(
     metrics.incrementPutRequests();
     const start = Date.now();
     const { email, password } = req.body;
-    const user = await DB.getUser(email, password);
-    const auth = await setAuth(user);
-    if (user) {
-      metrics.incrementActiveUsers();
-      metrics.incrementSuccessAuthAttempts();
-    }
-    else {
+    try {
+      const user = await DB.getUser(email, password);
+      const auth = await setAuth(user);
+    } catch {
       metrics.incrementFailedAuthAttempts();
+      const end = Date.now();
+      metrics.addEndpointLatency(end - start);
+      throw new StatusCodeError('unknown user', 404);
     }
+    metrics.incrementActiveUsers();
+    metrics.incrementSuccessAuthAttempts();
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json({ user: user, token: auth });
