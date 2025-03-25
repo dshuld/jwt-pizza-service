@@ -54,6 +54,7 @@ orderRouter.get(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.send(menu);
+    logger.httpLogger(req, res);
   })
 );
 
@@ -74,6 +75,7 @@ orderRouter.put(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.send(menu);
+    logger.httpLogger(req, res);
   })
 );
 
@@ -88,6 +90,7 @@ orderRouter.get(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json(result);
+    logger.httpLogger(req, res);
   })
 );
 
@@ -122,11 +125,13 @@ orderRouter.post(
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       res.send({ order, reportSlowPizzaToFactoryUrl: j.reportUrl, jwt: j.jwt });
+      logger.httpLogger(req, res);
     } else {
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       metrics.incrementCreationFailures();
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
+      logger.httpLogger(req, res);
     }
   })
 );

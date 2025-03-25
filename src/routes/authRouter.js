@@ -8,7 +8,6 @@ const authRouter = express.Router();
 
 const metrics = require('../metrics.js');
 const logger = require('../logger.js');
-app.use(logger.httpLogger);
 
 authRouter.endpoints = [
   {
@@ -91,6 +90,7 @@ authRouter.post(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json({ user: user, token: auth });
+    logger.httpLogger(req, res);
   })
 );
 
@@ -115,6 +115,7 @@ authRouter.put(
       metrics.addEndpointLatency(end - start);
       throw new StatusCodeError('unknown user', 404);
     }
+    logger.httpLogger(req, res);
   })
 );
 
@@ -130,6 +131,7 @@ authRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json({ message: 'logout successful' });
+    logger.httpLogger(req, res);
   })
 );
 
@@ -151,6 +153,7 @@ authRouter.put(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json(updatedUser);
+    logger.httpLogger(req, res);
   })
 );
 
