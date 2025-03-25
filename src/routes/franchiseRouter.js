@@ -63,7 +63,7 @@ franchiseRouter.get(
   asyncHandler(async (req, res) => {
     metrics.incrementGetRequests();
     const start = Date.now();
-    franchises = await DB.getFranchises(req.user);
+    const franchises = await DB.getFranchises(req.user);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json(franchises);

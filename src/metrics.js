@@ -75,8 +75,8 @@ function decrementActiveUsers() {
 }
 
 //auth attempts
-success_auth_attempts = 0;
-failed_auth_attempts = 0;
+let success_auth_attempts = 0;
+let failed_auth_attempts = 0;
 
 function incrementSuccessAuthAttempts() {
     success_auth_attempts++;
