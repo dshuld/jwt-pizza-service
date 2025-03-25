@@ -122,7 +122,7 @@ orderRouter.post(
     } else {
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      metrics.incrementFailedOrders();
+      metrics.incrementCreationFailures();
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
     }
   })
