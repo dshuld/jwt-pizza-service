@@ -70,6 +70,7 @@ authRouter.post(
   '/',
   asyncHandler(async (req, res) => {
     metrics.incrementPostRequests();
+    const start = Date.now();
     const { name, email, password, roles } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'name, email, and password are required' });
@@ -82,6 +83,10 @@ authRouter.post(
       user = await DB.addUser({ name, email, password, roles });
     }
     const auth = await setAuth(user);
+    metrics.incrementActiveUsers();
+    metrics.incrementSuccessAuthAttempts();
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
     res.json({ user: user, token: auth });
   })
 );
@@ -91,9 +96,19 @@ authRouter.put(
   '/',
   asyncHandler(async (req, res) => {
     metrics.incrementPutRequests();
+    const start = Date.now();
     const { email, password } = req.body;
     const user = await DB.getUser(email, password);
     const auth = await setAuth(user);
+    if (user) {
+      metrics.incrementActiveUsers();
+      metrics.incrementSuccessAuthAttempts();
+    }
+    else {
+      metrics.incrementFailedAuthAttempts();
+    }
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
     res.json({ user: user, token: auth });
   })
 );
@@ -104,7 +119,11 @@ authRouter.delete(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     metrics.incrementDeleteRequests();
+    metrics.decrementActiveUsers();
+    const start = Date.now();
     await clearAuth(req);
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
     res.json({ message: 'logout successful' });
   })
 );
@@ -115,6 +134,7 @@ authRouter.put(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     metrics.incrementPutRequests();
+    const start = Date.now();
     const { email, password } = req.body;
     const userId = Number(req.params.userId);
     const user = req.user;
@@ -123,6 +143,8 @@ authRouter.put(
     }
 
     const updatedUser = await DB.updateUser(userId, email, password);
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
     res.json(updatedUser);
   })
 );

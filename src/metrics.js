@@ -1,26 +1,15 @@
 const config = require('./config');
 
-module.exports = { sendMetricsPeriodically, incrementPostRequests, incrementGetRequests, incrementPutRequests, incrementDeleteRequests };
+module.exports = { sendMetricsPeriodically, 
+    incrementPostRequests, incrementGetRequests, incrementPutRequests, incrementDeleteRequests,
+    incrementActiveUsers, decrementActiveUsers,
+    incrementSuccessAuthAttempts, incrementFailedAuthAttempts,
+    incrementPizzasSold, incrementCreationFailures, incrementRevenue,
+    addEndpointLatency, addPizzaLatency };
 
 function sendMetricsPeriodically(period) {
 setInterval(() => {
     try {
-
-        //add some random requests
-        // for (let i = 0; i < Math.floor(Math.random() * 10); i++) {
-        //     incrementPostRequests();
-        // }
-        // for (let i = 0; i < Math.floor(Math.random() * 10); i++) {
-        //     incrementGetRequests();
-        // }
-        // for (let i = 0; i < Math.floor(Math.random() * 10); i++) {
-        //     incrementPutRequests();
-        // }
-        // for (let i = 0; i < Math.floor(Math.random() * 10); i++) {
-        //     incrementDeleteRequests();
-        // }
-        ////end random requests
-
         const metrics = getMetrics();
         sendMetricsToGrafana(metrics);
     } catch (error) {
@@ -54,23 +43,97 @@ let total_put_requests = 0;
 let total_delete_requests = 0;
 
 function incrementPostRequests() {
-    console.log('post++');
+    //console.log('post++');
     total_post_requests++;
 }
 
 function incrementGetRequests() {
-    console.log('get++');
+    //console.log('get++');
     total_get_requests++;
 }
 
 function incrementPutRequests() {
-    console.log('put++');
+    //console.log('put++');
     total_put_requests++;
 }
 
 function incrementDeleteRequests() {
-    console.log('delete++');
+    //console.log('delete++');
     total_delete_requests++;
+}
+
+//active users
+
+let active_users = 0;
+
+function incrementActiveUsers() {
+    active_users++;
+}
+
+function decrementActiveUsers() {
+    active_users--;
+}
+
+//auth attempts
+success_auth_attempts = 0;
+failed_auth_attempts = 0;
+
+function incrementSuccessAuthAttempts() {
+    success_auth_attempts++;
+}
+
+function incrementFailedAuthAttempts() {
+    failed_auth_attempts++;
+}
+
+//pizza stats
+let total_pizzas_sold = 0;
+let total_creation_failures = 0;
+let total_revenue = 0;
+
+function incrementPizzasSold(amount = 1) {
+    total_pizzas_sold += amount;
+}
+
+function incrementCreationFailures() {
+    total_creation_failures++;
+}
+
+function incrementRevenue(amount) {
+    total_revenue += amount;
+}
+
+//latency
+let endpoint_latencies = [];
+let pizza_latencies = [];
+
+function addEndpointLatency(latency) {
+    endpoint_latencies.push(latency);
+}
+
+function addPizzaLatency(latency) {
+    pizza_latencies.push(latency);
+}
+
+function getAverageEndpointLatency() {
+    if (endpoint_latencies.length === 0) {
+        return 0;
+    }
+    const sum = endpoint_latencies.reduce((a, b) => a + b, 0);
+    return sum / endpoint_latencies.length;
+}
+
+function getAveragePizzaLatency() {
+    if (pizza_latencies.length === 0) {
+        return 0;
+    }
+    const sum = pizza_latencies.reduce((a, b) => a + b, 0);
+    return sum / pizza_latencies.length;
+}
+
+function clearLatencies() {
+    endpoint_latencies = [];
+    pizza_latencies = [];
 }
 
 //util
@@ -193,8 +256,163 @@ function getMetrics() {
                 "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
                 "isMonotonic": true
             }
+        },
+        {
+            "name": "active_users",
+            "unit": "count",
+            "gauge": {
+                "dataPoints": [
+                    {
+                        "asInt": active_users,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "success_auth_attempts",
+            "unit": "count",
+            "sum": {
+                "dataPoints": [
+                    {
+                        "asInt": success_auth_attempts,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ],
+                "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
+                "isMonotonic": true
+            }
+        },
+        {
+            "name": "failed_auth_attempts",
+            "unit": "count",
+            "sum": {
+                "dataPoints": [
+                    {
+                        "asInt": failed_auth_attempts,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ],
+                "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
+                "isMonotonic": true
+            }
+        },
+        {
+            "name": "pizzas_sold",
+            "unit": "count",
+            "sum": {
+                "dataPoints": [
+                    {
+                        "asInt": total_pizzas_sold,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ],
+                "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
+                "isMonotonic": true
+            }
+        },
+        {
+            "name": "creation_failures",
+            "unit": "count",
+            "sum": {
+                "dataPoints": [
+                    {
+                        "asInt": total_creation_failures,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ],
+                "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
+                "isMonotonic": true
+            }
+        },
+        {
+            "name": "revenue",
+            "unit": "₿",
+            "sum": {
+                "dataPoints": [
+                    {
+                        "asDouble": total_revenue,
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ],
+                "aggregationTemporality": 'AGGREGATION_TEMPORALITY_CUMULATIVE',
+                "isMonotonic": true
+            }
+        },
+        {
+            "name": "endpoint_latency",
+            "unit": "ms",
+            "gauge": {
+                "dataPoints": [
+                    {
+                        "asDouble": getAverageEndpointLatency(),
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "pizza_latency",
+            "unit": "ms",
+            "gauge": {
+                "dataPoints": [
+                    {
+                        "asDouble": getAveragePizzaLatency(),
+                        "timeUnixNano": Date.now() * 1000000,
+                        "attributes": [
+                            {
+                                "key": "source",
+                                "value": { "stringValue": config.metrics.source }
+                            }
+                        ]
+                    }
+                ]
+            }
         }
     ];
+    clearLatencies();
     return metrics;
 }
 

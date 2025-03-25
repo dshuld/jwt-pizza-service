@@ -47,7 +47,11 @@ orderRouter.get(
   '/menu',
   asyncHandler(async (req, res) => {
     metrics.incrementGetRequests();
-    res.send(await DB.getMenu());
+    const start = Date.now();
+    const menu = await DB.getMenu();
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
+    res.send(menu);
   })
 );
 
@@ -57,13 +61,17 @@ orderRouter.put(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     metrics.incrementPutRequests();
+    const start = Date.now();
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError('unable to add menu item', 403);
     }
 
     const addMenuItemReq = req.body;
     await DB.addMenuItem(addMenuItemReq);
-    res.send(await DB.getMenu());
+    const menu = await DB.getMenu();
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
+    res.send(menu);
   })
 );
 
@@ -73,7 +81,11 @@ orderRouter.get(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     metrics.incrementGetRequests();
-    res.json(await DB.getOrders(req.user, req.query.page));
+    const start = Date.now();
+    const result = await DB.getOrders(req.user, req.query.page);
+    const end = Date.now();
+    metrics.addEndpointLatency(end - start);
+    res.json(result);
   })
 );
 
@@ -83,17 +95,34 @@ orderRouter.post(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     metrics.incrementPostRequests();
+    const start = Date.now();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
+    const pizza_start = Date.now();
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
     const j = await r.json();
+    const pizza_end = Date.now();
+    metrics.addPizzaLatency(pizza_end - pizza_start);
     if (r.ok) {
+      //
+      metrics.incrementPizzasSold(order.items.length);
+      let sum = 0;
+      order.items.forEach((i) => {
+        sum += i.price;
+      });
+      metrics.incrementRevenue(sum);
+      //
+      const end = Date.now();
+      metrics.addEndpointLatency(end - start);
       res.send({ order, reportSlowPizzaToFactoryUrl: j.reportUrl, jwt: j.jwt });
     } else {
+      const end = Date.now();
+      metrics.addEndpointLatency(end - start);
+      metrics.incrementFailedOrders();
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
     }
   })
