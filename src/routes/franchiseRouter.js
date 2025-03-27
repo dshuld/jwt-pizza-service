@@ -7,6 +7,7 @@ const franchiseRouter = express.Router();
 
 const metrics = require('../metrics.js');
 const logger = require('../logger.js');
+app.use(logger.httpLogger);
 
 franchiseRouter.endpoints = [
   {
@@ -68,7 +69,6 @@ franchiseRouter.get(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json(franchises);
-    logger.httpLogger(req, res);
   })
 );
 
@@ -87,7 +87,6 @@ franchiseRouter.get(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json(result);
-    logger.httpLogger(req, res);
   })
 );
 
@@ -107,7 +106,6 @@ franchiseRouter.post(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.send(result);
-    logger.httpLogger(req, res);
   })
 );
 
@@ -126,7 +124,6 @@ franchiseRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json({ message: 'franchise deleted' });
-    logger.httpLogger(req, res);
   })
 );
 
@@ -146,7 +143,6 @@ franchiseRouter.post(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.send(result);
-    logger.httpLogger(req, res);
   })
 );
 
@@ -168,7 +164,6 @@ franchiseRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     res.json({ message: 'store deleted' });
-    logger.httpLogger(req, res);
   })
 );
 
