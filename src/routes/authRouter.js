@@ -7,8 +7,6 @@ const { DB, Role } = require('../database/database.js');
 const authRouter = express.Router();
 
 const metrics = require('../metrics.js');
-const logger = require('../logger.js');
-app.use(logger.httpLogger);
 
 authRouter.endpoints = [
   {
@@ -62,7 +60,6 @@ async function setAuthUser(req, res, next) {
 // Authenticate token
 authRouter.authenticateToken = (req, res, next) => {
   if (!req.user) {
-    // logger.exceptionLogger(new StatusCodeError('unauthorized', 401), req, res, next);
     return res.status(401).send({ message: 'unauthorized' });
   }
   next();

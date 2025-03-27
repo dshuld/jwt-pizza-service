@@ -7,8 +7,6 @@ const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const orderRouter = express.Router();
 
 const metrics = require('../metrics.js');
-const logger = require('../logger.js');
-app.use(logger.httpLogger);
 
 orderRouter.endpoints = [
   {
@@ -101,7 +99,6 @@ orderRouter.post(
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
     const pizza_start = Date.now();
-    logger.apiLogger('POST /api/order');
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
