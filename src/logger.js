@@ -17,12 +17,12 @@ function httpLogger(req, res, resBody) {
 };
 
 function sqlLogger(query) {
-    const logData = query;
+    const logData = { query };
     log('info', 'sql', logData);
 };
 
-function apiLogger(call) {
-    const logData = { call: call };
+function apiLogger(url, request) {
+    const logData = { url: url, request: request };
     log('info', 'api', logData);
 }
 

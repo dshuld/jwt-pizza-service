@@ -67,8 +67,9 @@ franchiseRouter.get(
     const franchises = await DB.getFranchises(req.user);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    logger.httpLogger(req, res, franchises);
+    
     res.json(franchises);
+    logger.httpLogger(req, res, franchises);
   })
 );
 
@@ -86,8 +87,9 @@ franchiseRouter.get(
     }
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    logger.httpLogger(req, res, result);
+    
     res.json(result);
+    logger.httpLogger(req, res, result);
   })
 );
 
@@ -100,6 +102,7 @@ franchiseRouter.post(
     const start = Date.now();
     if (!req.user.isRole(Role.Admin)) {
       const resBody = { message: 'unauthorized' };
+      res.status(403);
       logger.httpLogger(req, res, resBody);
       throw new StatusCodeError(resBody.message, 403);
     }
@@ -108,8 +111,9 @@ franchiseRouter.post(
     const result = await DB.createFranchise(franchise);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    logger.httpLogger(req, res, result);
+    
     res.send(result);
+    logger.httpLogger(req, res, result);
   })
 );
 
@@ -128,8 +132,9 @@ franchiseRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     const resBody = { message: 'franchise deleted' };
-    logger.httpLogger(req, res, resBody);
+    
     res.json(resBody);
+    logger.httpLogger(req, res, resBody);
   })
 );
 
@@ -143,15 +148,17 @@ franchiseRouter.post(
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (!franchise || (!req.user.isRole(Role.Admin) && !franchise.admins.some((admin) => admin.id === req.user.id))) {
-      const resBody = { message: 'unauthorized' };
+      const resBody = { message: 'unauthorized' };4
+      res.status(403);
       logger.httpLogger(req, res, resBody);
       throw new StatusCodeError(resBody.message, 403);
     }
     const result = await DB.createStore(franchiseId, req.body);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    logger.httpLogger(req, res, result);
+    
     res.send(result);
+    logger.httpLogger(req, res, result);
   })
 );
 
@@ -166,6 +173,7 @@ franchiseRouter.delete(
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (!franchise || (!req.user.isRole(Role.Admin) && !franchise.admins.some((admin) => admin.id === req.user.id))) {
       const resBody = { message: 'unable to delete a store' };
+      res.status(403);
       logger.httpLogger(req, res, resBody);
       throw new StatusCodeError(resBody.message, 403);
     }
@@ -175,8 +183,9 @@ franchiseRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     const resBody = { message: 'store deleted' };
-    logger.httpLogger(req, res, resBody);
+    
     res.json(resBody);
+    logger.httpLogger(req, res, resBody);
   })
 );
 

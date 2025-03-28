@@ -61,7 +61,10 @@ async function setAuthUser(req, res, next) {
 // Authenticate token
 authRouter.authenticateToken = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).send({ message: 'unauthorized' });
+    const resBody = { message: 'unauthorized' };
+    const result = res.status(401).send(resBody);
+    logger.httpLogger(req, res, resBody);
+    return result;
   }
   next();
 };
@@ -74,7 +77,12 @@ authRouter.post(
     const start = Date.now();
     const { name, email, password, roles } = req.body;
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'name, email, and password are required' });
+      const end = Date.now();
+      metrics.addEndpointLatency(end - start);
+      const resBody = { message: 'name, email, and password are required' };
+      const result = res.status(400).json(resBody);
+      logger.httpLogger(req, res, resBody);
+      return result;
     }
     let user;
     if (!roles) {
@@ -89,8 +97,9 @@ authRouter.post(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     const resBody = { user: user, token: auth };
-    logger.httpLogger(req, res, resBody);
+    
     res.json(resBody);
+    logger.httpLogger(req, res, resBody);
   })
 );
 
@@ -109,13 +118,15 @@ authRouter.put(
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       const resBody = { user: user, token: auth };
-      logger.httpLogger(req, res, resBody);
+      
       res.json(resBody);
+      logger.httpLogger(req, res, resBody);
     } catch {
       metrics.incrementFailedAuthAttempts();
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       const resBody = { message: 'unknown user' };
+      res.status(404);
       logger.httpLogger(req, res, resBody);
       throw new StatusCodeError(resBody.message, 404);
     }
@@ -134,8 +145,9 @@ authRouter.delete(
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
     const resBody = { message: 'logout successful' };
-    logger.httpLogger(req, res, resBody);
+    
     res.json(resBody);
+    logger.httpLogger(req, res, resBody);
   })
 );
 
@@ -153,15 +165,17 @@ authRouter.put(
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       const resBody = { message: 'unauthorized' };
+      const result = res.status(403).json(resBody);
       logger.httpLogger(req, res, resBody);
-      return res.status(403).json(resBody);
+      return result
     }
 
     const updatedUser = await DB.updateUser(userId, email, password);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    logger.httpLogger(req, res, updatedUser);
+    
     res.json(updatedUser);
+    logger.httpLogger(req, res, updatedUser);
   })
 );
 
