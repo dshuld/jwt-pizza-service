@@ -1,3 +1,5 @@
+const config = require('./config');
+
 module.exports = { httpLogger, sqlLogger, apiLogger };
 
 function httpLogger(req, res, resBody) {
@@ -27,7 +29,7 @@ function apiLogger(call) {
 //util
 
 function log(level, type, logData) {
-    const labels = { component: config.source, level: level, type: type };
+    const labels = { component: config.logger.source, level: level, type: type };
     const values = [nowString(), sanitize(logData)];
     const logEvent = { streams: [{ stream: labels, values: [values] }] };
 
@@ -56,12 +58,12 @@ function sanitize(logData) {
 
 function sendLogToGrafana(event) {
     const body = JSON.stringify(event);
-    fetch(`${config.url}`, {
+    fetch(`${config.logger.url}`, {
         method: 'post',
         body: body,
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.userId}:${config.apiKey}`,
+            Authorization: `Bearer ${config.logger.userId}:${config.logger.apiKey}`,
         },
     }).then((res) => {
         if (!res.ok) console.log('Failed to send log to Grafana');
