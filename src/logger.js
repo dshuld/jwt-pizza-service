@@ -18,18 +18,18 @@ function httpLogger(req, res, resBody) {
 
 function sqlLogger(query) {
     const logData = query;
-    this.log('info', 'sql', logData);
+    log('info', 'sql', logData);
 };
 
 function apiLogger(call) {
     const logData = { call: call };
-    this.log('info', 'api', logData);
+    log('info', 'api', logData);
 }
 
 //util
 
 function log(level, type, logData) {
-    const labels = { component: config.logger.source, level: level, type: type };
+    const labels = { component: config.logging.source, level: level, type: type };
     const values = [nowString(), sanitize(logData)];
     const logEvent = { streams: [{ stream: labels, values: [values] }] };
 
@@ -58,12 +58,12 @@ function sanitize(logData) {
 
 function sendLogToGrafana(event) {
     const body = JSON.stringify(event);
-    fetch(`${config.logger.url}`, {
+    fetch(`${config.logging.url}`, {
         method: 'post',
         body: body,
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.logger.userId}:${config.logger.apiKey}`,
+            Authorization: `Bearer ${config.logging.userId}:${config.logging.apiKey}`,
         },
     }).then((res) => {
         if (!res.ok) console.log('Failed to send log to Grafana');
