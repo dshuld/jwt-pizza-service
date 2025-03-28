@@ -7,6 +7,7 @@ const { DB, Role } = require('../database/database.js');
 const authRouter = express.Router();
 
 const metrics = require('../metrics.js');
+const logger = require('../logger.js');
 
 authRouter.endpoints = [
   {
@@ -87,7 +88,9 @@ authRouter.post(
     metrics.incrementSuccessAuthAttempts();
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    res.json({ user: user, token: auth });
+    const resBody = { user: user, token: auth };
+    logger.httpLogger(req, res, resBody);
+    res.json(resBody);
   })
 );
 
@@ -105,12 +108,16 @@ authRouter.put(
       metrics.incrementSuccessAuthAttempts();
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      res.json({ user: user, token: auth });
+      const resBody = { user: user, token: auth };
+      logger.httpLogger(req, res, resBody);
+      res.json(resBody);
     } catch {
       metrics.incrementFailedAuthAttempts();
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      throw new StatusCodeError('unknown user', 404);
+      const resBody = { message: 'unknown user' };
+      logger.httpLogger(req, res, resBody);
+      throw new StatusCodeError(resBody.message, 404);
     }
   })
 );
@@ -126,7 +133,9 @@ authRouter.delete(
     await clearAuth(req);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    res.json({ message: 'logout successful' });
+    const resBody = { message: 'logout successful' };
+    logger.httpLogger(req, res, resBody);
+    res.json(resBody);
   })
 );
 
@@ -141,12 +150,17 @@ authRouter.put(
     const userId = Number(req.params.userId);
     const user = req.user;
     if (user.id !== userId && !user.isRole(Role.Admin)) {
-      return res.status(403).json({ message: 'unauthorized' });
+      const end = Date.now();
+      metrics.addEndpointLatency(end - start);
+      const resBody = { message: 'unauthorized' };
+      logger.httpLogger(req, res, resBody);
+      return res.status(403).json(resBody);
     }
 
     const updatedUser = await DB.updateUser(userId, email, password);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, updatedUser);
     res.json(updatedUser);
   })
 );

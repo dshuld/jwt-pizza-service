@@ -6,6 +6,7 @@ const { StatusCodeError, asyncHandler } = require('../endpointHelper.js');
 const franchiseRouter = express.Router();
 
 const metrics = require('../metrics.js');
+const logger = require('../logger.js');
 
 franchiseRouter.endpoints = [
   {
@@ -66,6 +67,7 @@ franchiseRouter.get(
     const franchises = await DB.getFranchises(req.user);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, franchises);
     res.json(franchises);
   })
 );
@@ -84,6 +86,7 @@ franchiseRouter.get(
     }
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, result);
     res.json(result);
   })
 );
@@ -96,13 +99,16 @@ franchiseRouter.post(
     metrics.incrementPostRequests();
     const start = Date.now();
     if (!req.user.isRole(Role.Admin)) {
-      throw new StatusCodeError('unable to create a franchise', 403);
+      const resBody = { message: 'unauthorized' };
+      logger.httpLogger(req, res, resBody);
+      throw new StatusCodeError(resBody.message, 403);
     }
 
     const franchise = req.body;
     const result = await DB.createFranchise(franchise);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, result);
     res.send(result);
   })
 );
@@ -121,7 +127,9 @@ franchiseRouter.delete(
     await DB.deleteFranchise(franchiseId);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    res.json({ message: 'franchise deleted' });
+    const resBody = { message: 'franchise deleted' };
+    logger.httpLogger(req, res, resBody);
+    res.json(resBody);
   })
 );
 
@@ -135,11 +143,14 @@ franchiseRouter.post(
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (!franchise || (!req.user.isRole(Role.Admin) && !franchise.admins.some((admin) => admin.id === req.user.id))) {
-      throw new StatusCodeError('unable to create a store', 403);
+      const resBody = { message: 'unauthorized' };
+      logger.httpLogger(req, res, resBody);
+      throw new StatusCodeError(resBody.message, 403);
     }
     const result = await DB.createStore(franchiseId, req.body);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, result);
     res.send(result);
   })
 );
@@ -154,14 +165,18 @@ franchiseRouter.delete(
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (!franchise || (!req.user.isRole(Role.Admin) && !franchise.admins.some((admin) => admin.id === req.user.id))) {
-      throw new StatusCodeError('unable to delete a store', 403);
+      const resBody = { message: 'unable to delete a store' };
+      logger.httpLogger(req, res, resBody);
+      throw new StatusCodeError(resBody.message, 403);
     }
 
     const storeId = Number(req.params.storeId);
     await DB.deleteStore(franchiseId, storeId);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
-    res.json({ message: 'store deleted' });
+    const resBody = { message: 'store deleted' };
+    logger.httpLogger(req, res, resBody);
+    res.json(resBody);
   })
 );
 

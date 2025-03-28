@@ -7,6 +7,7 @@ const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const orderRouter = express.Router();
 
 const metrics = require('../metrics.js');
+const logger = require('../logger.js');
 
 orderRouter.endpoints = [
   {
@@ -51,6 +52,7 @@ orderRouter.get(
     const menu = await DB.getMenu();
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, menu);
     res.send(menu);
   })
 );
@@ -63,7 +65,9 @@ orderRouter.put(
     metrics.incrementPutRequests();
     const start = Date.now();
     if (!req.user.isRole(Role.Admin)) {
-      throw new StatusCodeError('unable to add menu item', 403);
+      const resBody = { message: 'unable to add menu item' };
+      logger.httpLogger(req, res, resBody);
+      throw new StatusCodeError(resBody.message, 403);
     }
 
     const addMenuItemReq = req.body;
@@ -71,6 +75,7 @@ orderRouter.put(
     const menu = await DB.getMenu();
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, menu);
     res.send(menu);
   })
 );
@@ -85,6 +90,7 @@ orderRouter.get(
     const result = await DB.getOrders(req.user, req.query.page);
     const end = Date.now();
     metrics.addEndpointLatency(end - start);
+    logger.httpLogger(req, res, result);
     res.json(result);
   })
 );
@@ -104,6 +110,7 @@ orderRouter.post(
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
+    logger.apiLogger(r);
     const j = await r.json();
     const pizza_end = Date.now();
     metrics.addPizzaLatency(pizza_end - pizza_start);
@@ -118,12 +125,16 @@ orderRouter.post(
       //
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      res.send({ order, reportSlowPizzaToFactoryUrl: j.reportUrl, jwt: j.jwt });
+      const resBody = { order, reportSlowPizzaToFactoryUrl: j.reportUrl, jwt: j.jwt };
+      logger.httpLogger(req, res, resBody);
+      res.send(resBody);
     } else {
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
       metrics.incrementCreationFailures();
-      res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
+      const resBody = { message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl };
+      logger.httpLogger(req, res, resBody);
+      res.status(500).send(resBody);
     }
   })
 );
