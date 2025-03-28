@@ -22,7 +22,7 @@ function sqlLogger(query) {
 };
 
 function apiLogger(url, request) {
-    const logData = { url: url, request: request };
+    const logData = { url: url, request: JSON.stringify(request) };
     log('info', 'api', logData);
 }
 
