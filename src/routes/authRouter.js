@@ -121,14 +121,14 @@ authRouter.put(
       
       res.json(resBody);
       logger.httpLogger(req, res, resBody);
-    } catch {
+    } catch(err) {
       metrics.incrementFailedAuthAttempts();
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      const resBody = { message: 'unknown user' };
-      res.status(404);
+      const resBody = { message: err.message };
+      res.status(err.statusCode);
       logger.httpLogger(req, res, resBody);
-      throw new StatusCodeError(resBody.message, 404);
+      throw new StatusCodeError(err.message, err.statusCode);
     }
   })
 );
