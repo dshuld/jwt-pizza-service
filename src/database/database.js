@@ -157,17 +157,38 @@ class DB {
   async addDinerOrder(user, order) {
     const connection = await this.getConnection();
     try {
-      const orderResult = await this.query(connection, `INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now())`, [user.id, order.franchiseId, order.storeId]);
+      const orderResult = await this.query(
+        connection,
+        `INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, NOW())`,
+        [user.id, order.franchiseId, order.storeId]
+      );
+  
       const orderId = orderResult.insertId;
+  
       for (const item of order.items) {
-        const menuId = await this.getID(connection, 'id', item.menuId, 'menu');
-        await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [orderId, menuId, item.description, item.price]);
+        const [menuItem] = await this.query(
+          connection,
+          `SELECT id, description, price FROM menu WHERE id = ?`,
+          [item.menuId]
+        );
+  
+        if (!menuItem) {
+          throw new Error(`Invalid menu item ID: ${item.menuId}`);
+        }
+  
+        await this.query(
+          connection,
+          `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`,
+          [orderId, menuItem.id, menuItem.description, menuItem.price]
+        );
       }
+  
       return { ...order, id: orderId };
     } finally {
       connection.end();
     }
   }
+  
 
   async createFranchise(franchise) {
     const connection = await this.getConnection();
