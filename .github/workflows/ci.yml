@@ -38,11 +38,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run Dastardly Action Step
-        uses: PortSwigger/dastardly-github-action@main
-        with:
-          target-url: 'https://pizza.cs329.click'
-
       - name: Write config file
         run: |
           echo "module.exports = {
@@ -148,3 +143,8 @@ jobs:
     - name: Deploy new container
       run: |
         aws ecs update-service --cluster jwt-pizza-service --service jwt-pizza-service --force-new-deployment
+    
+    - name: Run Dastardly Action Step
+      uses: PortSwigger/dastardly-github-action@main
+      with:
+        target-url: 'https://pizza.shuldberg.click'
