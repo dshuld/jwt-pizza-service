@@ -158,7 +158,7 @@ authRouter.put(
     if (user.id !== userId && !user.isRole(Role.Admin)) {
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
-      const resBody = { message: 'unauthorized' };
+      const resBody = { message: 'unauthorized: ' + user.id + '!==' + userId + ' is ' + user.id !== userId + ' and user.isRole('+Role.Admin+') is '+ user.isRole(Role.Admin) };
       const result = res.status(403).json(resBody);
       logger.httpLogger(req, res, resBody);
       return result
