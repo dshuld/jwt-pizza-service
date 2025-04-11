@@ -165,28 +165,39 @@ class DB {
   
       const orderId = orderResult.insertId;
   
+      const sanitizedItems = [];
+
       for (const item of order.items) {
         const [menuItem] = await this.query(
           connection,
           `SELECT id, description, price FROM menu WHERE id = ?`,
           [item.menuId]
         );
-  
-        if (!menuItem) {
-          throw new Error(`Invalid menu item ID: ${item.menuId}`);
-        }
-  
+
+        if (!menuItem) throw new Error(`Invalid menu item ID: ${item.menuId}`);
+
         await this.query(
           connection,
           `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`,
           [orderId, menuItem.id, menuItem.description, menuItem.price]
         );
 
-        item.description = menuItem.description;
-        item.price = menuItem.price;
+        sanitizedItems.push({
+          menuId: menuItem.id,
+          description: menuItem.description,
+          price: menuItem.price,
+        });
       }
-  
-      return { ...order, id: orderId };
+
+      // Return clean version of order
+      return {
+        id: orderId,
+        dinerId: user.id,
+        franchiseId: order.franchiseId,
+        storeId: order.storeId,
+        items: sanitizedItems,
+      };
+
     } finally {
       connection.end();
     }
