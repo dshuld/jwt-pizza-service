@@ -170,7 +170,7 @@ class DB {
       for (const item of order.items) {
         const [menuItem] = await this.query(
           connection,
-          `SELECT id, description, price FROM menu WHERE id = ?`,
+          `SELECT title, description, price FROM menu WHERE id = ?`,
           [item.menuId]
         );
 
@@ -179,11 +179,11 @@ class DB {
         await this.query(
           connection,
           `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`,
-          [orderId, menuItem.id, menuItem.description, menuItem.price]
+          [orderId, item.menuId, menuItem.description, menuItem.price]
         );
 
         sanitizedItems.push({
-          menuId: menuItem.id,
+          menuId: item.menuId,
           description: menuItem.description,
           price: menuItem.price,
         });
