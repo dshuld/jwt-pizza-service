@@ -75,7 +75,7 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     metrics.incrementPostRequests();
     const start = Date.now();
-    const { name, email, password, roles } = req.body;
+    const { name, email, password } = req.body;
     if (!name || !email || !password) {
       const end = Date.now();
       metrics.addEndpointLatency(end - start);
@@ -84,13 +84,7 @@ authRouter.post(
       logger.httpLogger(req, res, resBody);
       return result;
     }
-    let user;
-    if (!roles) {
-      user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
-    }
-    else {
-      user = await DB.addUser({ name, email, password, roles });
-    }
+    let user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
     const auth = await setAuth(user);
     metrics.incrementActiveUsers();
     metrics.incrementSuccessAuthAttempts();
