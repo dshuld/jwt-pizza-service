@@ -22,13 +22,13 @@ apiRouter.use('/auth', authRouter);
 apiRouter.use('/order', orderRouter);
 apiRouter.use('/franchise', franchiseRouter);
 
-apiRouter.use('/docs', (req, res) => {
-  res.json({
-    version: version.version,
-    endpoints: [...authRouter.endpoints, ...orderRouter.endpoints, ...franchiseRouter.endpoints],
-    config: { factory: config.factory.url, db: config.db.connection.host },
-  });
-});
+// apiRouter.use('/docs', (req, res) => {
+//   res.json({
+//     version: version.version,
+//     endpoints: [...authRouter.endpoints, ...orderRouter.endpoints, ...franchiseRouter.endpoints],
+//     config: { factory: config.factory.url, db: config.db.connection.host },
+//   });
+// });
 
 app.get('/', (req, res) => {
   res.json({
