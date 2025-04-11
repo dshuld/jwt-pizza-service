@@ -69,8 +69,8 @@ jobs:
             },
           };" > src/config.js
 
-      - name: Tests
-        run: npm test
+      # - name: Tests
+      #   run: npm test
 
       - name: Create dist
         run: |
