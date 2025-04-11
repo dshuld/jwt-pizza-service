@@ -181,6 +181,9 @@ class DB {
           `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`,
           [orderId, menuItem.id, menuItem.description, menuItem.price]
         );
+
+        item.description = menuItem.description;
+        item.price = menuItem.price;
       }
   
       return { ...order, id: orderId };
